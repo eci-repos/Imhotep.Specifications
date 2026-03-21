@@ -1,0 +1,45 @@
+<Solution>
+  <Folder Name="/docs/" />
+  <Folder Name="/docs/concepts/" />
+  <Folder Name="/docs/diagrams/" />
+  <Folder Name="/docs/isl/">
+    <File Path="docs/isl/001010 ISL v0.0 IMHOTEP Specification Language.docx" />
+    <File Path="docs/isl/001020 ISL v1.0 ASC Language.docx" />
+    <File Path="docs/isl/001030 ISL v1.1 Canonical Semantic Model.docx" />
+    <File Path="docs/isl/001040 ISL v1.2 ASC Execution Model.docx" />
+    <File Path="docs/isl/001050 ISL v1.3 Specification Readiness Levels.docx" />
+    <File Path="docs/isl/001060 ISL v1.4 The Traceability Model.docx" />
+    <File Path="docs/isl/001070 ISL v1.5 The Construction Planning Model.docx" />
+    <File Path="docs/isl/001080 ISL v1.6 The Tool Integration Model.docx" />
+    <File Path="docs/isl/001090 ISL v1.7 The Governance and Control Model.docx" />
+    <File Path="docs/isl/002000 ISL v2.0 The Platform Architecture Model.docx" />
+    <File Path="docs/isl/002010 ISL v2.1 The Agent Collaboration Model.docx" />
+    <File Path="docs/isl/002020 ISL v2.2 The State and Memory Model.docx" />
+    <File Path="docs/isl/002030 ISL v2.3 The Artifact Repository Model.docx" />
+    <File Path="docs/isl/002040 ISL v2.4 The Execution Runtime Model.docx" />
+    <File Path="docs/isl/002050 ISL v2.5 The Model Integration and Abstraction Layer.docx" />
+    <File Path="docs/isl/002060 ISL v2.6 The Observability and Telemetry Model.docx" />
+    <File Path="docs/isl/002070 ISL v2.7 The Enterprise Deployment and Scaling Model.docx" />
+    <File Path="docs/isl/003000 ISL v3.0 The Reference Implementation Architecture.docx" />
+    <File Path="docs/isl/003010 ISL v3.1 The Reference Repository Layout and Service Topology.docx" />
+    <File Path="docs/isl/003020 ISL v3.2 The First Proof-of-Concept Construction Pipeline.docx" />
+    <File Path="docs/isl/003030 ISL v3.3 The Minimal Autonomous Construction System (MACS).docx" />
+    <File Path="docs/isl/003040 ISL v3.4 The Agent Implementation Model.docx" />
+    <File Path="docs/isl/003050 ISL v3.5 The Runtime Orchestration Architecture.docx" />
+    <File Path="docs/isl/003060 ISL v3.6 The Autonomous Development Loop.docx" />
+    <File Path="docs/isl/003070 ISL v3.7 The Autonomous Software Development Lifecycle Model.docx" />
+    <File Path="docs/isl/003080 ISL v3.8 The Model Interaction Protocol.docx" />
+    <File Path="docs/isl/003090 ISL v3.9 The Tool Plugin Architecture.docx" />
+    <File Path="docs/isl/003100 ISL v3.10 The Platform Security Architecture.docx" />
+    <File Path="docs/isl/004000 ISL v4.0 The IMHOTEP Platform Vision and Ecosystem.docx" />
+  </Folder>
+  <Folder Name="/examples/" />
+  <Folder Name="/examples/minimal-spec/">
+    <File Path="examples/minimal-spec/macs.specifications.v1.0.docx" />
+  </Folder>
+  <Folder Name="/experimental/" />
+  <Folder Name="/reference/" />
+  <Folder Name="/Solution Items/">
+    <File Path="README.md" />
+  </Folder>
+</Solution>
