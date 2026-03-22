@@ -1,4 +1,11 @@
 <Solution>
+  <Folder Name="/discussions/">
+    <File Path="discussions/discussion.im.abstraction-extensibility.docx" />
+    <File Path="discussions/discussion.im.macs.autonomous-ready-stp.docx" />
+    <File Path="discussions/discussion.im.macs.autonomous-ready-stp.png" />
+    <File Path="discussions/discussion.im.macs.autonomous-ready-summary.docx" />
+    <File Path="discussions/discussions.im.abstractions-extensibility.png" />
+  </Folder>
   <Folder Name="/docs/" />
   <Folder Name="/docs/concepts/" />
   <Folder Name="/docs/diagrams/" />
