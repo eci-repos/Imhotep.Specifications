@@ -11,11 +11,13 @@
     <File Path="discussions/discussion.im.macs.execution-runtime.png" />
     <File Path="discussions/discussion.im.macs.phases-1-10-draft-1.docx" />
     <File Path="discussions/discussion.im.macs.phases-ing-completed.docx" />
+    <File Path="discussions/discussion.im.macs.poc-court-intake-rest.docx" />
     <File Path="discussions/discussion.im.macs.spec-engine.docx" />
     <File Path="discussions/discussion.im.macs.spec-engine.png" />
     <File Path="discussions/discussion.im.macs.stp-authoring.docx" />
     <File Path="discussions/discussions.im.abstractions-extensibility.png" />
     <File Path="discussions/imhotep.architecture-asc-draft-1.png" />
+    <File Path="discussions/imhotep.asc.phases-draft-1.png" />
   </Folder>
   <Folder Name="/docs/" />
   <Folder Name="/docs/concepts/" />
