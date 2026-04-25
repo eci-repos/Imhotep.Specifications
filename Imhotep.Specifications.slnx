@@ -1,6 +1,8 @@
 <Solution>
   <Folder Name="/discussions/">
     <File Path="discussions/discussion.im.abstraction-extensibility.docx" />
+    <File Path="discussions/discussion.im.day2.stp.draft-5.docx" />
+    <File Path="discussions/discussion.im.day2.stp.draft-5.png" />
     <File Path="discussions/discussion.im.macs.autonomous-ready-stp.docx" />
     <File Path="discussions/discussion.im.macs.autonomous-ready-stp.png" />
     <File Path="discussions/discussion.im.macs.autonomous-ready-summary.docx" />
@@ -18,6 +20,7 @@
     <File Path="discussions/discussions.im.abstractions-extensibility.png" />
     <File Path="discussions/imhotep.architecture-asc-draft-1.png" />
     <File Path="discussions/imhotep.asc.phases-draft-1.png" />
+    <File Path="discussions/read-me-first.docx" />
   </Folder>
   <Folder Name="/docs/" />
   <Folder Name="/docs/concepts/" />
