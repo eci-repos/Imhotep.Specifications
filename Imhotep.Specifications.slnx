@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/agenda/">
+    <File Path="agenda/agenda.docx" />
+  </Folder>
   <Folder Name="/discussions/">
     <File Path="discussions/discussion.im.abstraction-extensibility.docx" />
     <File Path="discussions/discussion.im.day2.stp.draft-5.docx" />
@@ -63,6 +66,7 @@
   <Folder Name="/experimental/" />
   <Folder Name="/reference/" />
   <Folder Name="/Solution Items/">
+    <File Path="agenda/agenda.docx" />
     <File Path="README.md" />
   </Folder>
 </Solution>
