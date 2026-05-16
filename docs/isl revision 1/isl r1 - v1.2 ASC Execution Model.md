@@ -390,19 +390,31 @@ If the plan is not executable, execution MUST halt and produce a Planning Execut
 
 ---
 
-## 12.0 Phase 3 — Artifact Generation
+## 12.0 Boundary-Aware Execution
+
+The Execution Runtime MUST execute construction tasks according to both task dependencies and construction boundary dependencies defined in ISL v1.5.
+
+The runtime MUST validate Boundary Entry Criteria before beginning execution within a construction boundary and MUST evaluate Boundary Exit Criteria before a boundary may be marked complete.
+
+Cross-boundary execution activity MUST occur only through valid Connection Contexts or approved governance overrides.
+
+The runtime MUST preserve boundary state and Boundary Continuation Records so autonomous construction can resume after interruption without loss of execution integrity.
+
+---
+
+## 13.0 Phase 3 — Artifact Generation
 
 Artifact Generation creates implementation artifacts from construction tasks. This phase is where reasoning agents, generators, templates, and other construction mechanisms produce tangible outputs.
 
 Generated artifacts are not trusted at creation time. They enter the repository with a provisional status and must later pass deterministic validation before becoming stable outputs.
 
-### 12.1 Entry Criteria
+### 13.1 Entry Criteria
 
 Phase 3 MUST NOT begin unless Phase 2 completed successfully.
 
 A task MUST NOT enter artifact generation unless all of its dependencies are satisfied.
 
-### 12.2 Artifact Types
+### 13.2 Artifact Types
 
 The following artifact types are defined.
 
@@ -416,7 +428,7 @@ The following artifact types are defined.
 | test           | Test artifact                           |
 | documentation  | Generated documentation artifact        |
 
-### 12.3 Required Activities
+### 13.3 Required Activities
 
 For each eligible construction task, the runtime MUST:
 
@@ -429,7 +441,7 @@ For each eligible construction task, the runtime MUST:
 * write artifacts to the Artifact Repository
 * update task and traceability state
 
-### 12.4 Artifact Metadata Schema
+### 13.4 Artifact Metadata Schema
 
 Each artifact MUST be recorded with the following metadata.
 
@@ -446,7 +458,7 @@ Each artifact MUST be recorded with the following metadata.
 | repository-location | string   | REQUIRED    | Location in artifact repository                                       |
 | content-hash        | string   | CONDITIONAL | Integrity hash when supported                                         |
 
-### 12.5 Artifact Generation Rules
+### 13.5 Artifact Generation Rules
 
 An artifact MUST NOT be created without a task-id.
 
@@ -458,7 +470,7 @@ An artifact MUST NOT be marked `valid` during generation.
 
 If a task completes without producing its declared artifacts, the runtime MUST mark the task as failed.
 
-### 12.6 Exit Criteria
+### 13.6 Exit Criteria
 
 Phase 3 completes successfully when all eligible artifact-generation tasks have either:
 
@@ -470,17 +482,17 @@ Execution MUST NOT proceed to final validation outcomes for an artifact that was
 
 ---
 
-## 13.0 Phase 4 — Deterministic Validation
+## 14.0 Phase 4 — Deterministic Validation
 
 Deterministic Validation evaluates generated artifacts using registered deterministic tools. This phase is the foundation of execution reliability because it prevents reasoning outputs from being accepted without objective verification.
 
 Validation MUST be performed through the Tool Integration Model defined in ISL v1.6. The execution runtime MUST treat tool results as authoritative for objective checks such as compilation, schema validation, static analysis, tests, and security scans where applicable.
 
-### 13.1 Entry Criteria
+### 14.1 Entry Criteria
 
 Phase 4 begins for an artifact only after the artifact has been generated and recorded with status `pending` or `repaired`.
 
-### 13.2 Required Activities
+### 14.2 Required Activities
 
 The runtime MUST:
 
@@ -492,7 +504,7 @@ The runtime MUST:
 * initiate repair when required
 * record validation results in traceability state
 
-### 13.3 Validation Result Schema
+### 14.3 Validation Result Schema
 
 | Field                  | Type     | Required    | Description                                     |
 | ---------------------- | -------- | ----------- | ----------------------------------------------- |
@@ -508,7 +520,7 @@ The runtime MUST:
 | tool-version-confirmed | string   | REQUIRED    | Tool version used                               |
 | next-action            | enum     | REQUIRED    | proceed, repair, escalate, halt                 |
 
-### 13.4 Validation Outcome Handling
+### 14.4 Validation Outcome Handling
 
 | Outcome | Runtime Action                                                                     |
 | ------- | ---------------------------------------------------------------------------------- |
@@ -518,7 +530,7 @@ The runtime MUST:
 | timeout | Retry once; if timeout recurs, treat as failed                                     |
 | error   | Record tool error; treat as failed unless governance permits retry or substitution |
 
-### 13.5 Artifact Status Rules
+### 14.5 Artifact Status Rules
 
 An artifact MAY be marked `valid` only after required deterministic validation passes.
 
@@ -528,7 +540,7 @@ An artifact MAY remain `pending` only while awaiting validation.
 
 An artifact MUST be marked `escalated` when repair or validation cannot continue without governance or human intervention.
 
-### 13.6 Exit Criteria
+### 14.6 Exit Criteria
 
 Phase 4 completes for an artifact when validation produces a terminal outcome of:
 
@@ -542,13 +554,13 @@ Phase 4 completes for the construction plan only when all required validation ac
 
 ---
 
-## 14.0 Phase 5 — Repair Cycles
+## 15.0 Phase 5 — Repair Cycles
 
 Repair Cycles are initiated when deterministic validation identifies failures in generated artifacts. This phase provides the controlled feedback loop required for autonomous construction to converge toward valid outputs.
 
 Repair is not open-ended. It MUST operate under explicit iteration limits, escalation thresholds, and termination rules. Without such limits, autonomous repair becomes operationally unsafe and economically unpredictable.
 
-### 14.1 Entry Criteria
+### 15.1 Entry Criteria
 
 Phase 5 begins when a validation result requires repair.
 
@@ -560,7 +572,7 @@ A repair cycle MUST NOT begin unless:
 * repair limits have not been exceeded
 * governance policy permits automated repair for the artifact or task type
 
-### 14.2 Repair Termination Policy
+### 15.2 Repair Termination Policy
 
 The following default repair termination policy applies unless a stricter runtime configuration is approved by governance.
 
@@ -572,7 +584,7 @@ The following default repair termination policy applies unless a stricter runtim
 | Maximum repair duration per artifact                  | implementation-defined                      | YES          |
 | Maximum repair duration per construction plan         | implementation-defined                      | YES          |
 
-### 14.3 Repair Record Schema
+### 15.3 Repair Record Schema
 
 The Repair Analyst agent or runtime MUST produce a Repair Record for each repair cycle.
 
@@ -590,7 +602,7 @@ The Repair Analyst agent or runtime MUST produce a Repair Record for each repair
 | outcome                     | enum     | REQUIRED    | resolved, unresolved, escalated, abandoned |
 | recorded-at                 | ISO 8601 | REQUIRED    | Time repair record was created             |
 
-### 14.4 Repair Execution Rules
+### 15.4 Repair Execution Rules
 
 The runtime MUST increment the repair iteration count for each repair attempt.
 
@@ -602,7 +614,7 @@ A repair cycle MUST preserve prior artifact versions or content hashes where sup
 
 A repaired artifact MUST retain traceability to the original source entity and failed validation result.
 
-### 14.5 Escalation Rules
+### 15.5 Escalation Rules
 
 The runtime MUST escalate when:
 
@@ -621,13 +633,13 @@ When escalation occurs, the runtime MUST:
 * continue unaffected tasks only when dependency rules permit
 * require governance or human resolution before retry
 
-### 14.6 Convergence Failure
+### 15.6 Convergence Failure
 
 If repair limits are reached without successful validation, the construction plan MUST be marked failed unless governance explicitly authorizes continuation under a documented waiver.
 
 A construction plan failure MUST produce a Completion Report with failure status.
 
-### 14.7 Exit Criteria
+### 15.7 Exit Criteria
 
 Phase 5 exits for an artifact when:
 
@@ -639,17 +651,17 @@ Phase 5 exits for an artifact when:
 
 ---
 
-## 15.0 Phase 6 — Test Generation and Execution
+## 16.0 Phase 6 — Test Generation and Execution
 
 Test Generation and Execution verifies that generated artifacts satisfy functional requirements, workflows, policies, and acceptance criteria. This phase extends validation beyond artifact correctness into behavior verification.
 
 Tests MUST be derived from Requirement and Validation entities. A conforming runtime MUST ensure that must-have requirements are covered by executable or reviewable validation before construction can proceed.
 
-### 15.1 Entry Criteria
+### 16.1 Entry Criteria
 
 Phase 6 MUST NOT begin until generated artifacts required for test derivation have passed deterministic validation or have accepted warnings that do not block testing.
 
-### 15.2 Required Activities
+### 16.2 Required Activities
 
 The runtime MUST:
 
@@ -661,7 +673,7 @@ The runtime MUST:
 * initiate repair when test failures indicate artifact defects
 * escalate when test failures require human decision or governance review
 
-### 15.3 Test Types
+### 16.3 Test Types
 
 | Test Type   | Description                                  |
 | ----------- | -------------------------------------------- |
@@ -672,7 +684,7 @@ The runtime MUST:
 | security    | Validates security control behavior          |
 | operational | Validates runtime or deployment expectations |
 
-### 15.4 Test Result Schema
+### 16.4 Test Result Schema
 
 | Field          | Type     | Required    | Description                                                    |
 | -------------- | -------- | ----------- | -------------------------------------------------------------- |
@@ -687,7 +699,7 @@ The runtime MUST:
 | failure-detail | string   | CONDITIONAL | Required when outcome is failed or blocked                     |
 | evidence       | string   | CONDITIONAL | Test report or output artifact reference                       |
 
-### 15.5 Test Coverage Rules
+### 16.5 Test Coverage Rules
 
 At least one test or validation method MUST exist for each must-have functional requirement.
 
@@ -697,7 +709,7 @@ A failed test linked to a must-have requirement MUST block progression to Phase 
 
 Aggregate test results without individual case detail MUST NOT satisfy test execution requirements.
 
-### 15.6 Exit Criteria
+### 16.6 Exit Criteria
 
 Phase 6 completes successfully when:
 
@@ -708,17 +720,17 @@ Phase 6 completes successfully when:
 
 ---
 
-## 16.0 Phase 7 — Security and Policy Validation
+## 17.0 Phase 7 — Security and Policy Validation
 
 Security and Policy Validation evaluates generated artifacts, execution outputs, and deployment preparation candidates against Policy entities and governance rules. This phase ensures that constructed systems do not merely function, but also comply with declared security, compliance, operational, technology, and risk constraints.
 
 This phase integrates the canonical Policy entities, governance model, deterministic tools, and runtime enforcement behavior.
 
-### 16.1 Entry Criteria
+### 17.1 Entry Criteria
 
 Phase 7 MUST NOT begin until Phase 6 has completed successfully or all blocking test failures have been resolved, repaired, or waived.
 
-### 16.2 Required Activities
+### 17.2 Required Activities
 
 The Security Validator agent, deterministic tools, or governance engine MUST:
 
@@ -730,7 +742,7 @@ The Security Validator agent, deterministic tools, or governance engine MUST:
 * escalate governance-controlled violations
 * apply waiver rules where permitted
 
-### 16.3 Minimum Security Validation Coverage
+### 17.3 Minimum Security Validation Coverage
 
 Security and policy validation MUST include, at minimum, evaluation of:
 
@@ -743,7 +755,7 @@ Security and policy validation MUST include, at minimum, evaluation of:
 * interface exposure policies
 * deployment policy constraints
 
-### 16.4 Policy Evaluation Record Schema
+### 17.4 Policy Evaluation Record Schema
 
 | Field               | Type     | Required    | Description                                                         |
 | ------------------- | -------- | ----------- | ------------------------------------------------------------------- |
@@ -758,7 +770,7 @@ Security and policy validation MUST include, at minimum, evaluation of:
 | waiver-id           | string   | CONDITIONAL | Required when outcome is waived                                     |
 | next-action         | enum     | REQUIRED    | proceed, repair, escalate, block                                    |
 
-### 16.5 Outcome Handling
+### 17.5 Outcome Handling
 
 | Outcome        | Runtime Action                                         |
 | -------------- | ------------------------------------------------------ |
@@ -767,13 +779,13 @@ Security and policy validation MUST include, at minimum, evaluation of:
 | not-applicable | Record justification and proceed                       |
 | waived         | Proceed only if waiver is valid under governance rules |
 
-### 16.6 Blocking Rules
+### 17.6 Blocking Rules
 
 A non-compliant outcome for a policy with violation-response `block` MUST prevent progression until the violation is resolved or a valid waiver is granted.
 
 Critical or high security findings MUST be treated as failed outcomes unless the governing policy explicitly defines a different response and governance approves it.
 
-### 16.7 Exit Criteria
+### 17.7 Exit Criteria
 
 Phase 7 completes successfully only when:
 
@@ -784,17 +796,17 @@ Phase 7 completes successfully only when:
 
 ---
 
-## 17.0 Phase 8 — Artifact Consolidation
+## 18.0 Phase 8 — Artifact Consolidation
 
 Artifact Consolidation organizes validated artifacts into a stable project structure. This phase prepares the generated system for maintainability, packaging, review, and deployment preparation.
 
 Consolidation is not simply copying files. It is the process of ensuring that validated artifacts form a coherent repository state with manifests, documentation, dependency declarations, traceability records, and build-ready organization.
 
-### 17.1 Entry Criteria
+### 18.1 Entry Criteria
 
 Phase 8 MUST NOT begin until Phase 7 completes successfully.
 
-### 17.2 Required Activities
+### 18.2 Required Activities
 
 The runtime MUST consolidate artifacts into an organized repository structure that includes:
 
@@ -810,7 +822,7 @@ The runtime MUST consolidate artifacts into an organized repository structure th
 * traceability metadata
 * generated execution summary
 
-### 17.3 Consolidated Project Record Schema
+### 18.3 Consolidated Project Record Schema
 
 | Field                  | Type     | Required    | Description                            |
 | ---------------------- | -------- | ----------- | -------------------------------------- |
@@ -825,7 +837,7 @@ The runtime MUST consolidate artifacts into an organized repository structure th
 | consolidated-at        | ISO 8601 | REQUIRED    | Time consolidation completed           |
 | status                 | enum     | REQUIRED    | completed, failed, escalated           |
 
-### 17.4 Consolidation Rules
+### 18.4 Consolidation Rules
 
 Only valid, waived, or governance-approved artifacts MAY be included in the stable consolidated project.
 
@@ -835,7 +847,7 @@ The consolidated project MUST be tagged with the specification version that prod
 
 The consolidated project MUST preserve traceability metadata.
 
-### 17.5 Exit Criteria
+### 18.5 Exit Criteria
 
 Phase 8 completes successfully when:
 
@@ -847,17 +859,17 @@ Phase 8 completes successfully when:
 
 ---
 
-## 18.0 Phase 9 — Deployment Preparation
+## 19.0 Phase 9 — Deployment Preparation
 
 Deployment Preparation produces or validates the artifacts needed to prepare the constructed system for controlled deployment. This phase does not necessarily deploy the system. It ensures the system is ready for deployment authorization under governance control.
 
 Deployment preparation closes the execution lifecycle by translating consolidated implementation outputs into operationally usable packages, manifests, environment definitions, and readiness evidence.
 
-### 18.1 Entry Criteria
+### 19.1 Entry Criteria
 
 Phase 9 MUST NOT begin until Phase 8 completes successfully.
 
-### 18.2 Required Activities
+### 19.2 Required Activities
 
 The Deployment Preparer agent, runtime, or deterministic tools MUST produce or validate:
 
@@ -871,7 +883,7 @@ The Deployment Preparer agent, runtime, or deterministic tools MUST produce or v
 * deployment validation results
 * deployment authorization evidence
 
-### 18.3 Deployment Preparation Record Schema
+### 19.3 Deployment Preparation Record Schema
 
 | Field                     | Type     | Required | Description                              |
 | ------------------------- | -------- | -------- | ---------------------------------------- |
@@ -886,7 +898,7 @@ The Deployment Preparer agent, runtime, or deterministic tools MUST produce or v
 | prepared-at               | ISO 8601 | REQUIRED | Time preparation completed               |
 | status                    | enum     | REQUIRED | ready, failed, escalated                 |
 
-### 18.4 Deployment Preparation Rules
+### 19.4 Deployment Preparation Rules
 
 The platform MUST NOT mark a construction plan complete until deployment preparation artifacts have been generated and validated.
 
@@ -896,7 +908,7 @@ Deployment preparation MUST respect governance rules for deployment authorizatio
 
 A status of `ready` does not imply that production deployment is approved. Deployment authorization is governed by ISL v1.7.
 
-### 18.5 Exit Criteria
+### 19.5 Exit Criteria
 
 Phase 9 completes successfully when:
 
@@ -909,13 +921,13 @@ Phase 9 completes successfully when:
 
 ---
 
-## 19.0 Execution Graph
+## 20.0 Execution Graph
 
 The Execution Graph is the runtime structure used to coordinate phases, tasks, dependencies, artifacts, validations, repairs, and outcomes. It is derived from the Construction Task Graph but includes additional runtime state and execution records.
 
 The Execution Graph allows the platform to monitor progress, recover from interruption, evaluate dependencies, and support audit reconstruction.
 
-### 19.1 Execution Graph Schema
+### 20.1 Execution Graph Schema
 
 | Field                 | Type     | Required    | Description                                                |
 | --------------------- | -------- | ----------- | ---------------------------------------------------------- |
@@ -934,7 +946,7 @@ The Execution Graph allows the platform to monitor progress, recover from interr
 | created-at            | ISO 8601 | REQUIRED    | Creation timestamp                                         |
 | updated-at            | ISO 8601 | REQUIRED    | Most recent update timestamp                               |
 
-### 19.2 Execution Graph Rules
+### 20.2 Execution Graph Rules
 
 The Execution Graph MUST be stored as part of platform state.
 
@@ -953,13 +965,13 @@ The Execution Graph MUST support traversal from:
 
 ---
 
-## 20.0 Execution State Model
+## 21.0 Execution State Model
 
 This section defines execution states used by the runtime. State consistency is required for safe scheduling, recovery, observability, and governance.
 
 Execution state applies to phases, tasks, artifacts, validations, repairs, and the overall construction plan.
 
-### 20.1 Construction Plan Execution States
+### 21.1 Construction Plan Execution States
 
 | State       | Meaning                                                               |
 | ----------- | --------------------------------------------------------------------- |
@@ -970,7 +982,7 @@ Execution state applies to phases, tasks, artifacts, validations, repairs, and t
 | escalated   | Execution requires governance or human action                         |
 | halted      | Execution stopped by policy, runtime failure, or governance authority |
 
-### 20.2 Phase States
+### 21.2 Phase States
 
 | State       | Meaning                                   |
 | ----------- | ----------------------------------------- |
@@ -981,7 +993,7 @@ Execution state applies to phases, tasks, artifacts, validations, repairs, and t
 | failed      | Phase failed                              |
 | escalated   | Phase requires governance or human action |
 
-### 20.3 Artifact States
+### 21.3 Artifact States
 
 | State      | Meaning                                                              |
 | ---------- | -------------------------------------------------------------------- |
@@ -992,7 +1004,7 @@ Execution state applies to phases, tasks, artifacts, validations, repairs, and t
 | escalated  | Artifact requires governance or human intervention                   |
 | deprecated | Artifact has been superseded                                         |
 
-### 20.4 State Transition Rules
+### 21.4 State Transition Rules
 
 The runtime MUST enforce valid state transitions.
 
@@ -1006,13 +1018,13 @@ An escalated task or artifact MUST NOT resume until the escalation has been reso
 
 ---
 
-## 21.0 Agent Role Participation
+## 22.0 Agent Role Participation
 
 This section defines how agent roles participate in execution. Detailed agent contracts are defined in later ISL documents, but the execution model must identify which roles are expected during each phase.
 
 Agents operate under runtime control. They do not independently define execution flow.
 
-### 21.1 Agent Role Mapping
+### 22.1 Agent Role Mapping
 
 | Role                      | Primary Execution Phase |
 | ------------------------- | ----------------------- |
@@ -1026,7 +1038,7 @@ Agents operate under runtime control. They do not independently define execution
 | Security Validator        | Phase 7                 |
 | Deployment Preparer       | Phase 9                 |
 
-### 21.2 Agent Execution Rules
+### 22.2 Agent Execution Rules
 
 An agent MUST receive structured input from the runtime.
 
@@ -1040,13 +1052,13 @@ If an agent fails to produce a valid output, the runtime MUST record an agent fa
 
 ---
 
-## 22.0 Deterministic Tool Participation
+## 23.0 Deterministic Tool Participation
 
 This section defines how deterministic tools participate in execution. The detailed registration and invocation contract is defined by ISL v1.6, but this model establishes when and why tools are required during execution.
 
 Tools provide objective validation and transformation capabilities that reasoning agents cannot guarantee.
 
-### 22.1 Required Tool Uses
+### 23.1 Required Tool Uses
 
 Deterministic tools MUST be used for applicable checks including:
 
@@ -1060,7 +1072,7 @@ Deterministic tools MUST be used for applicable checks including:
 * infrastructure validation
 * package or container build validation
 
-### 22.2 Tool Failure Handling
+### 23.2 Tool Failure Handling
 
 Tool failures MUST be handled according to ISL v1.6 outcome rules.
 
@@ -1078,7 +1090,7 @@ This section defines how execution integrates with governance. Governance is not
 
 Execution MUST operate under the governance model defined in ISL v1.7.
 
-### 23.1 Governance Checkpoints
+### 24.1 Governance Checkpoints
 
 The runtime MUST consult governance before or during:
 
@@ -1091,7 +1103,7 @@ The runtime MUST consult governance before or during:
 * deployment authorization
 * continuation after escalation
 
-### 23.2 Governance Event Recording
+### 24.2 Governance Event Recording
 
 The runtime MUST record governance-relevant execution events, including:
 
@@ -1106,19 +1118,19 @@ The runtime MUST record governance-relevant execution events, including:
 * execution-completed
 * execution-failed
 
-### 23.3 Governance Blocking Rule
+### 24.3 Governance Blocking Rule
 
 If governance blocks an execution action, the runtime MUST NOT proceed with that action until governance records a resolution, waiver, override, or authorization.
 
 ---
 
-## 24.0 Traceability Requirements During Execution
+## 25.0 Traceability Requirements During Execution
 
 This section defines execution-time traceability obligations. Traceability is not something reconstructed after construction. It must be recorded as execution occurs.
 
 Execution traceability ensures that every generated artifact can be traced backward to specification intent and every specification entity can be traced forward to construction outputs.
 
-### 24.1 Required Traceability Links
+### 25.1 Required Traceability Links
 
 The runtime MUST record links between:
 
@@ -1131,13 +1143,13 @@ The runtime MUST record links between:
 * deployment artifacts and infrastructure entities
 * governance events and affected tasks or artifacts
 
-### 24.2 Traceability Timing
+### 25.2 Traceability Timing
 
 Traceability links MUST be recorded at the time the related event occurs.
 
 The runtime MUST NOT defer traceability reconstruction until after execution.
 
-### 24.3 Traceability Failure
+### 25.3 Traceability Failure
 
 If required traceability cannot be recorded, the affected artifact or task MUST be marked failed or escalated.
 
@@ -1145,13 +1157,13 @@ A construction plan MUST NOT be marked completed while required traceability lin
 
 ---
 
-## 25.0 Execution Error Taxonomy
+## 26.0 Execution Error Taxonomy
 
 This section defines execution-level error classes. These classes provide consistent reporting for runtime failures and support governance review, repair analysis, monitoring, and audit.
 
 Execution errors differ from authored-language errors and canonical semantic errors. They occur during runtime activity.
 
-### 25.1 Execution Error Record Schema
+### 26.1 Execution Error Record Schema
 
 | Field           | Type     | Required    | Description                 |
 | --------------- | -------- | ----------- | --------------------------- |
@@ -1167,7 +1179,7 @@ Execution errors differ from authored-language errors and canonical semantic err
 | required-action | string   | REQUIRED    | Required remediation        |
 | recorded-at     | ISO 8601 | REQUIRED    | Time error was recorded     |
 
-### 25.2 Error Classes
+### 26.2 Error Classes
 
 | Error Class                             | Description                             | Default Handling               |
 | --------------------------------------- | --------------------------------------- | ------------------------------ |
@@ -1186,7 +1198,7 @@ Execution errors differ from authored-language errors and canonical semantic err
 | execution-repository-failure            | Artifact Repository operation failed    | retry or halt                  |
 | execution-deployment-preparation-failed | Deployment preparation failed           | escalate or fail               |
 
-### 25.3 Error Handling Rules
+### 26.3 Error Handling Rules
 
 Blocking execution errors MUST prevent completion.
 
@@ -1198,13 +1210,13 @@ Errors affecting tasks MUST be reflected in the Execution Graph.
 
 ---
 
-## 26.0 Parallel Execution Rules
+## 27.0 Parallel Execution Rules
 
 This section defines how parallel execution may occur safely. Parallel execution improves performance, but it must not violate dependency, governance, artifact, or traceability rules.
 
 Parallelism is permitted only where the Construction Task Graph and Execution Graph prove that tasks are independent or dependency-safe.
 
-### 26.1 Permitted Parallelism
+### 27.1 Permitted Parallelism
 
 Tasks MAY execute in parallel when:
 
@@ -1215,7 +1227,7 @@ Tasks MAY execute in parallel when:
 * required tools and agents are available
 * traceability can be recorded independently
 
-### 26.2 Prohibited Parallelism
+### 27.2 Prohibited Parallelism
 
 Tasks MUST NOT execute in parallel when:
 
@@ -1225,7 +1237,7 @@ Tasks MUST NOT execute in parallel when:
 * shared state consistency cannot be guaranteed
 * repair of one task may invalidate the other task’s outputs
 
-### 26.3 Parallel Failure Handling
+### 27.3 Parallel Failure Handling
 
 Failure of one parallel task MUST NOT automatically halt unrelated tasks unless dependency, governance, or runtime configuration requires halt.
 
@@ -1233,13 +1245,13 @@ If a failed task is on the critical path, the runtime MUST evaluate whether depe
 
 ---
 
-## 27.0 Runtime Recovery and Resumption
+## 28.0 Runtime Recovery and Resumption
 
 This section defines recovery behavior after interruption, crash, halt, or controlled suspension. Long-running autonomous construction must be resumable without losing execution integrity.
 
 Recovery depends on durable state, execution graph persistence, artifact repository consistency, and traceability records.
 
-### 27.1 Recovery Preconditions
+### 28.1 Recovery Preconditions
 
 The runtime MAY resume execution only if:
 
@@ -1250,7 +1262,7 @@ The runtime MAY resume execution only if:
 * unresolved escalations are not bypassed
 * runtime configuration remains compatible
 
-### 27.2 Recovery Rules
+### 28.2 Recovery Rules
 
 On recovery, the runtime MUST:
 
@@ -1262,7 +1274,7 @@ On recovery, the runtime MUST:
 * identify tasks safe to resume
 * record a recovery event
 
-### 27.3 Recovery Event Schema
+### 28.3 Recovery Event Schema
 
 | Field              | Type     | Required    | Description                                    |
 | ------------------ | -------- | ----------- | ---------------------------------------------- |
@@ -1278,13 +1290,13 @@ If consistency-status is inconsistent, execution MUST NOT resume until the incon
 
 ---
 
-## 28.0 Completion Criteria
+## 29.0 Completion Criteria
 
 This section defines when execution may be considered complete. Completion is not equivalent to artifact generation. Completion requires validation, testing, policy compliance, consolidation, deployment preparation, traceability, and governance readiness.
 
 The runtime MUST evaluate completion criteria before marking the construction plan completed.
 
-### 28.1 Required Completion Conditions
+### 29.1 Required Completion Conditions
 
 Execution MAY be marked completed only when all of the following are true:
 
@@ -1300,7 +1312,7 @@ Execution MAY be marked completed only when all of the following are true:
 * governance state contains required execution records
 * Completion Report has been produced
 
-### 28.2 Failed Completion
+### 29.2 Failed Completion
 
 Execution MUST be marked failed when:
 
@@ -1312,7 +1324,7 @@ Execution MUST be marked failed when:
 * traceability integrity cannot be established
 * repository state cannot be made consistent
 
-### 28.3 Escalated Completion State
+### 29.3 Escalated Completion State
 
 Execution MUST be marked escalated when progress is suspended pending governance or human action.
 
@@ -1320,13 +1332,13 @@ An escalated execution MUST NOT be marked completed or failed until the escalati
 
 ---
 
-## 29.0 Completion Report
+## 30.0 Completion Report
 
 This section defines the required final execution report. The Completion Report provides the summary evidence needed for governance, audit, operations, and later maintenance.
 
 The Completion Report MUST be generated for completed, failed, halted, or escalated executions.
 
-### 29.1 Completion Report Schema
+### 30.1 Completion Report Schema
 
 | Field                         | Type     | Required    | Description                          |
 | ----------------------------- | -------- | ----------- | ------------------------------------ |
@@ -1349,7 +1361,7 @@ The Completion Report MUST be generated for completed, failed, halted, or escala
 | governance-events             | array    | CONDITIONAL | Governance event references          |
 | generated-at                  | ISO 8601 | REQUIRED    | Report generation time               |
 
-### 29.2 Report Integrity Rules
+### 30.2 Report Integrity Rules
 
 The Completion Report MUST be stored in the Artifact Repository or governance/audit record store.
 
@@ -1359,13 +1371,13 @@ The Completion Report MUST NOT claim completion if required validation, traceabi
 
 ---
 
-## 30.0 Observability Requirements
+## 31.0 Observability Requirements
 
 This section defines minimum observability requirements for execution. Detailed telemetry models are defined later in the ISL corpus, but execution must produce enough observable data to support monitoring, debugging, audit, and continuous improvement.
 
 An execution runtime that cannot explain what it is doing cannot be trusted for autonomous construction.
 
-### 30.1 Required Execution Telemetry
+### 31.1 Required Execution Telemetry
 
 The runtime MUST record telemetry for:
 
@@ -1383,7 +1395,7 @@ The runtime MUST record telemetry for:
 * recovery
 * completion
 
-### 30.2 Minimum Telemetry Fields
+### 31.2 Minimum Telemetry Fields
 
 Each telemetry event SHOULD include:
 
@@ -1401,11 +1413,11 @@ Each telemetry event SHOULD include:
 
 ---
 
-## 31.0 Conformance Requirements
+## 32.0 Conformance Requirements
 
 This section defines what it means for execution runtimes and execution records to conform to ISL v1.2. Conformance is separated because a runtime, execution graph, and generated records have different responsibilities.
 
-### 31.1 Runtime Conformance
+### 32.1 Runtime Conformance
 
 An execution runtime conforms to ISL v1.2 if it can:
 
@@ -1421,7 +1433,7 @@ An execution runtime conforms to ISL v1.2 if it can:
 * enforce completion criteria
 * produce Completion Reports
 
-### 31.2 Execution Graph Conformance
+### 32.2 Execution Graph Conformance
 
 An Execution Graph conforms to ISL v1.2 if it:
 
@@ -1432,7 +1444,7 @@ An Execution Graph conforms to ISL v1.2 if it:
 * supports audit traversal
 * reflects current runtime state accurately
 
-### 31.3 Execution Record Conformance
+### 32.3 Execution Record Conformance
 
 Execution records conform to ISL v1.2 if they:
 
@@ -1446,7 +1458,7 @@ Execution records conform to ISL v1.2 if they:
 
 ---
 
-## 32.0 Summary
+## 33.0 Summary
 
 ISL v1.2 defines the execution model that governs how an Autonomous-Ready specification is transformed into validated construction outputs. It establishes a controlled lifecycle of interpretation, planning confirmation, artifact generation, deterministic validation, bounded repair, testing, security and policy validation, consolidation, and deployment preparation.
 

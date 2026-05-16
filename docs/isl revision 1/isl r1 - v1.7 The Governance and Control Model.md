@@ -414,6 +414,16 @@ The runtime MUST enforce approval gates at the following points when applicable.
 | Deployment preparation completion                 | deployment-authorization                                                  |
 | Post-change continuation                          | post-change-reauthorization                                               |
 
+### 10.2.1 Boundary Governance Enforcement
+
+The Governance Engine MUST support governance evaluation at construction boundary entry, execution, escalation, and exit.
+
+Construction boundaries defined in ISL v1.5 MAY require approval gates, policy evaluation, waiver handling, escalation review, or audit recording before downstream boundaries may proceed.
+
+Boundary governance events MUST be recorded as auditable governance records.
+
+The Governance Engine MUST be capable of blocking execution when Boundary Entry Criteria or Boundary Exit Criteria fail governance validation.
+
 ### 10.3 Runtime Pause Behavior
 
 When an approval gate is pending, the runtime MUST:

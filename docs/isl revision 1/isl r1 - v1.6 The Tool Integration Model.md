@@ -423,6 +423,14 @@ Some tools may operate without direct artifact input, such as environment checks
 * the invocation target is represented in parameters or context
 * the rationale is recorded
 
+### 11.4 Boundary-Aware Tool Execution
+
+Deterministic tool execution MUST respect construction boundaries and Connection Contexts defined in ISL v1.5.
+
+A tool integration MUST NOT consume artifacts, validation outputs, or execution context originating from another construction boundary unless a valid Connection Context authorizes that interaction.
+
+Tool invocation results MUST remain traceable to the construction boundary and task that initiated the invocation.
+
 ---
 
 ## 12.0 Tool Invocation Result Contract

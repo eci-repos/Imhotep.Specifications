@@ -280,6 +280,14 @@ This section defines node types used in the traceability graph. Node types allow
 | DeploymentArtifact   | Deployment-related artifact                                    |
 | ExecutionEvent       | Runtime event from execution lifecycle                         |
 
+### 8.1.1 Construction Boundary Traceability
+
+The traceability graph SHOULD support ConstructionBoundary as a traceable planning and execution node type.
+
+Construction boundaries defined in ISL v1.5 MUST support bidirectional traceability relationships linking boundaries to construction tasks, artifacts, validation results, governance records, and Boundary Continuation Records.
+
+Boundary traceability relationships MUST be preserved across specification version changes and plan adaptation cycles.
+
 ### 8.2 Node Base Schema
 
 Every traceability node MUST include:

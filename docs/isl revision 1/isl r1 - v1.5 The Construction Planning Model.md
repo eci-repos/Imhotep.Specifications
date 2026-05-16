@@ -768,13 +768,295 @@ If task durations are unknown, the Planning Engine MAY calculate critical path b
 
 ---
 
-## 19.0 Repair Task Generation
+## 19.0 Construction Boundaries and Connection Contexts
+
+Construction boundaries define bounded planning, reasoning, validation, and execution scopes within a construction plan. A construction boundary is a first-class planning unit that groups related specification entities, construction tasks, artifacts, validation activities, governance checks, and continuation records into a coherent unit of autonomous work.
+
+The Planning Engine MUST organize every Construction Task Graph into one or more construction boundaries. A construction plan with no declared construction boundaries MUST NOT be considered valid.
+
+Construction boundaries exist to preserve architectural coherence, constrain reasoning scope, support deterministic execution, enable governance review, and maintain traceable continuity across staged construction activity. They apply equally to local-first workflows, cloud-hosted workflows, hybrid workflows, and distributed enterprise workflows.
+
+Boundary-based construction is not an optimization for small models or local execution environments. It is a structural control mechanism required for reliable autonomous construction. Local-first environments benefit from boundaries because they constrain model context and local execution resources. Cloud and enterprise environments benefit from boundaries because they constrain architectural scope, reduce reasoning drift, support governance checkpoints, and preserve auditability across complex construction workflows.
+
+---
+
+## 19.1 Boundary Definition
+
+A construction boundary MUST define a bounded scope of work within the Construction Task Graph.
+
+Each Boundary Definition MUST include the following fields.
+
+| Field                   | Type     | Required    | Description                                                                                                                                  |
+| ----------------------- | -------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| boundary-id             | string   | REQUIRED    | Unique identifier for the construction boundary                                                                                              |
+| boundary-name           | string   | REQUIRED    | Human-readable name of the boundary                                                                                                          |
+| boundary-purpose        | string   | REQUIRED    | Description of the architectural or construction purpose of the boundary                                                                     |
+| boundary-type           | enum     | REQUIRED    | foundation | specification | semantic | planning | runtime | governance | security | tooling | agent | telemetry | deployment | experimental |
+| source-entity-ids       | array    | REQUIRED    | Specification entity identifiers included in the boundary scope                                                                              |
+| task-ids                | array    | REQUIRED    | Construction task identifiers assigned to the boundary                                                                                       |
+| expected-artifact-types | array    | CONDITIONAL | Artifact types expected to be produced or modified within the boundary                                                                       |
+| dependency-boundaries   | array    | REQUIRED    | Boundary identifiers that MUST complete before this boundary may execute                                                                     |
+| connection-contexts     | array    | REQUIRED    | Connection Context identifiers governing permitted cross-boundary interactions                                                               |
+| entry-criteria          | array    | REQUIRED    | Conditions that MUST be satisfied before boundary execution begins                                                                           |
+| exit-criteria           | array    | REQUIRED    | Conditions that MUST be satisfied before the boundary may be marked complete                                                                 |
+| continuation-record-id  | string   | CONDITIONAL | Identifier of the Boundary Continuation Record produced after completion                                                                     |
+| status                  | enum     | REQUIRED    | pending | ready | in-progress | completed | failed | blocked | escalated                                                                     |
+| created-at              | ISO 8601 | REQUIRED    | Timestamp at which the boundary was created                                                                                                  |
+
+A construction task MUST belong to at least one construction boundary. A task MAY belong to more than one boundary only when it performs an explicitly declared cross-boundary coordination function.
+
+---
+
+## 19.2 Boundary Types
+
+Boundary type identifies the architectural role of the boundary within the construction plan.
+
+| Boundary Type | Description                                                                                                        |
+| ------------- | ------------------------------------------------------------------------------------------------------------------ |
+| foundation    | Establishes shared primitives, common contracts, base models, result types, or reusable abstractions               |
+| specification | Handles specification intake, parsing, readiness evaluation, and authored representation processing                |
+| semantic      | Handles canonical entities, semantic graph structure, relationships, and normalization outputs                     |
+| planning      | Handles task graph generation, dependency resolution, critical path computation, and parallel group planning       |
+| runtime       | Handles task execution, scheduling, state transitions, repair orchestration, and execution lifecycle behavior      |
+| governance    | Handles approval gates, policy evaluation, waiver handling, and audit controls                                     |
+| security      | Handles Zero Trust controls, access validation, dependency risk, and policy enforcement boundaries                 |
+| tooling       | Handles deterministic tool invocation, validation plugins, compiler/test/security tool integrations                |
+| agent         | Handles reasoning agent orchestration, model interaction, generation, review, and repair analysis                  |
+| telemetry     | Handles execution telemetry, observability, monitoring, diagnostics, and operational reporting                     |
+| deployment    | Handles packaging, infrastructure preparation, environment configuration, and deployment readiness                 |
+| experimental  | Handles proof-of-concept or domain-specific validation workflows that are not yet part of the stable core platform |
+
+Boundary types MAY be extended in future ISL versions. Custom boundary types MUST NOT be used in normative construction plans unless registered as an ISL extension.
+
+---
+
+## 19.3 Boundary Dependency Resolution
+
+The Planning Engine MUST resolve dependencies between boundaries before the Construction Task Graph is considered valid.
+
+Boundary dependencies MUST be derived from all of the following:
+
+| Source                      | Description                                                                       |
+| --------------------------- | --------------------------------------------------------------------------------- |
+| Task dependencies           | Dependencies declared between tasks assigned to different boundaries              |
+| Specification relationships | Relationships between specification entities included in different boundaries     |
+| Artifact consumption        | Artifacts produced in one boundary and consumed in another                        |
+| Governance requirements     | Policies or approvals that require one boundary to complete before another begins |
+| Tooling requirements        | Deterministic tools or validation outputs required by downstream boundaries       |
+
+A boundary MUST NOT be marked ready while any dependency boundary remains pending, in-progress, failed, blocked, or escalated.
+
+Circular boundary dependencies MUST be detected during planning. A detected boundary cycle MUST cause planning to halt and MUST produce a recorded planning error identifying the boundary identifiers involved in the cycle.
+
+Boundary dependency resolution MUST NOT replace task dependency resolution. Boundary dependencies constrain the execution order of groups of tasks, while task dependencies constrain the execution order of individual construction tasks.
+
+---
+
+## 19.4 Connection Contexts
+
+A Connection Context defines the permitted, required, and traceable interaction between construction boundaries.
+
+Connection Contexts are required because autonomous construction must not rely on implicit assumptions between boundaries. Cross-boundary interaction MUST be explicit, bounded, validated, and traceable.
+
+Each Connection Context MUST include the following fields.
+
+| Field                 | Type     | Required | Description                                                                                         |
+| --------------------- | -------- | -------- | --------------------------------------------------------------------------------------------------- |
+| connection-context-id | string   | REQUIRED | Unique identifier for the connection context                                                        |
+| from-boundary-id      | string   | REQUIRED | Boundary providing information, artifacts, or constraints                                           |
+| to-boundary-id        | string   | REQUIRED | Boundary receiving information, artifacts, or constraints                                           |
+| context-purpose       | string   | REQUIRED | Description of why the connection exists                                                            |
+| context-type          | enum     | REQUIRED | contract | artifact | semantic | governance | telemetry | validation | model-context | continuation |
+| provided-elements     | array    | REQUIRED | Identifiers of artifacts, tasks, specification entities, decisions, or records made available       |
+| required-elements     | array    | REQUIRED | Identifiers or categories of elements the receiving boundary requires                               |
+| validation-rule       | string   | REQUIRED | Verifiable rule used to confirm the connection context is valid                                     |
+| trust-policy          | string   | REQUIRED | Policy governing how the receiving boundary may rely on the provided elements                       |
+| created-at            | ISO 8601 | REQUIRED | Timestamp at which the connection context was created                                               |
+
+A boundary MUST NOT consume artifacts, decisions, model outputs, task results, governance records, or telemetry from another boundary unless a Connection Context authorizes that consumption.
+
+A Connection Context MUST be validated before the receiving boundary begins execution. Failure to validate a required Connection Context MUST block the receiving boundary and MUST be recorded as a planning or governance event.
+
+---
+
+## 19.5 Boundary Entry Criteria
+
+Boundary Entry Criteria define the conditions required before execution of a boundary may begin.
+
+At minimum, each boundary MUST verify the following before execution:
+
+| Entry Criterion                        | Description                                                                                       |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Dependency boundaries complete         | All dependency boundaries have completed successfully                                             |
+| Required connection contexts valid     | All required Connection Contexts have passed validation                                           |
+| Required artifacts available           | All artifacts consumed by the boundary are present and traceable                                  |
+| Required governance approvals recorded | All approval gates required before boundary execution have been satisfied                         |
+| Required tools registered              | All deterministic tools needed by tasks in the boundary have registered Tool Records              |
+| Required context assembled             | All model, agent, specification, task, and artifact context required by the boundary is available |
+
+The Runtime MUST NOT execute a task assigned to a boundary unless the boundary entry criteria have been satisfied.
+
+---
+
+## 19.6 Boundary Exit Criteria
+
+Boundary Exit Criteria define the conditions required before a boundary may be marked complete.
+
+At minimum, a boundary MUST NOT be marked completed unless all of the following are true:
+
+| Exit Criterion               | Description                                                                                                                    |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| All boundary tasks completed | Every task assigned to the boundary has completed successfully or has been explicitly waived through governance                |
+| Verification passed          | All required deterministic verification tasks associated with the boundary have passed or produced warning-acceptable outcomes |
+| Required artifacts produced  | All artifacts declared by the boundary have been produced and recorded                                                         |
+| Traceability complete        | All produced artifacts are linked to source specification entities and construction tasks                                      |
+| Governance checks satisfied  | All policies applicable to the boundary have been evaluated                                                                    |
+| Continuation record produced | A Boundary Continuation Record has been produced when downstream boundaries depend on this boundary                            |
+| No unresolved escalation     | No unresolved repair, validation, governance, or security escalation remains open within the boundary                          |
+
+If any exit criterion fails, the boundary MUST remain in failed, blocked, or escalated status until the condition is resolved.
+
+---
+
+## 19.7 Boundary Continuation Records
+
+A Boundary Continuation Record preserves the information required by downstream boundaries to continue construction without relying on conversational memory, implicit assumptions, or unstructured reasoning context.
+
+Each Boundary Continuation Record MUST include the following fields.
+
+| Field                         | Type     | Required    | Description                                                                             |
+| ----------------------------- | -------- | ----------- | --------------------------------------------------------------------------------------- |
+| continuation-record-id        | string   | REQUIRED    | Unique identifier for the continuation record                                           |
+| boundary-id                   | string   | REQUIRED    | Boundary that produced the continuation record                                          |
+| completed-at                  | ISO 8601 | REQUIRED    | Timestamp at which the boundary was completed or suspended                              |
+| completed-task-ids            | array    | REQUIRED    | Tasks completed within the boundary                                                     |
+| produced-artifact-ids         | array    | REQUIRED    | Artifacts produced or modified within the boundary                                      |
+| decision-record-ids           | array    | REQUIRED    | Decision Records produced within the boundary                                           |
+| validation-result-ids         | array    | REQUIRED    | Tool invocation or verification results associated with the boundary                    |
+| governance-record-ids         | array    | CONDITIONAL | Approval, waiver, policy evaluation, or escalation records associated with the boundary |
+| open-issues                   | array    | REQUIRED    | Issues deferred to later boundaries or human review                                     |
+| downstream-context-summary    | string   | REQUIRED    | Human-readable summary of what downstream boundaries must know                          |
+| next-boundary-recommendations | array    | CONDITIONAL | Recommended downstream boundary identifiers or actions                                  |
+
+Boundary Continuation Records MUST be immutable once produced. Corrections MUST be recorded as new continuation records referencing the superseded record.
+
+---
+
+## 19.8 Boundary Traceability
+
+Construction boundaries MUST participate in the traceability graph.
+
+The traceability graph MUST support boundary-level navigation in addition to specification, task, and artifact navigation. This extends the structural traceability requirement that every generated component be linked to the specification entities that defined it and that traceability relationships be established at artifact creation time. 
+
+The traceability graph SHOULD support the following additional node type:
+
+| Node Type            | Description                                                                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| ConstructionBoundary | A bounded planning and execution scope containing tasks, artifacts, validation results, governance records, and continuation records |
+
+The traceability graph SHOULD support the following additional edge types:
+
+| Edge Type             | Source               | Target                     | Meaning                                              |
+| --------------------- | -------------------- | -------------------------- | ---------------------------------------------------- |
+| contains-task         | ConstructionBoundary | ConstructionTask           | Boundary contains the task                           |
+| contains-artifact     | ConstructionBoundary | Artifact                   | Boundary produced or modified the artifact           |
+| depends-on-boundary   | ConstructionBoundary | ConstructionBoundary       | Boundary requires another boundary to complete first |
+| provides-context      | ConstructionBoundary | ConnectionContext          | Boundary provides context to another boundary        |
+| consumes-context      | ConstructionBoundary | ConnectionContext          | Boundary consumes context from another boundary      |
+| produces-continuation | ConstructionBoundary | BoundaryContinuationRecord | Boundary produced continuation state                 |
+| governed-by           | ConstructionBoundary | Policy                     | Boundary is constrained by a policy                  |
+
+Boundary traceability MUST support bidirectional navigation. Given a boundary, the platform MUST be able to return all tasks, artifacts, decision records, validation results, and governance records associated with it. Given an artifact, task, decision record, or validation result, the platform MUST be able to return the boundary or boundaries that produced or governed it.
+
+Boundary traceability MUST be preserved across specification version changes. If a boundary is superseded by a later construction cycle, the new boundary MUST be connected to the prior boundary using a supersedes relationship.
+
+---
+
+## 19.9 Boundary Governance
+
+Construction boundaries MUST be subject to governance controls when required by policy, risk tier, or boundary type.
+
+The Governance Engine MUST be able to evaluate policies at boundary entry, boundary execution, and boundary exit. A governance policy MAY apply to a single task, a single artifact, an entire boundary, or a connection between boundaries.
+
+The following boundary events MUST be recordable as governance events:
+
+| Event Type                   | Description                                                                                                       |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| boundary-created             | A construction boundary was created by the Planning Engine                                                        |
+| boundary-ready               | All entry criteria were satisfied                                                                                 |
+| boundary-started             | Execution began for the boundary                                                                                  |
+| boundary-blocked             | Boundary execution was blocked by missing dependency, missing context, failed validation, or governance condition |
+| boundary-completed           | Boundary exit criteria were satisfied                                                                             |
+| boundary-failed              | Boundary failed and cannot proceed without repair or governance action                                            |
+| boundary-escalated           | Boundary requires human governance review                                                                         |
+| connection-context-validated | A required cross-boundary context was validated                                                                   |
+| continuation-record-produced | Boundary produced a continuation record                                                                           |
+
+A boundary that contains governance, security, deployment, or high-risk policy enforcement tasks MUST NOT be marked complete until applicable governance evaluations have been recorded.
+
+---
+
+## 19.10 Boundary Execution Rules
+
+The Runtime MUST execute construction tasks according to both task dependencies and boundary dependencies.
+
+The Runtime MUST NOT execute a task outside the active boundary unless one of the following is true:
+
+| Condition                    | Description                                                                   |
+| ---------------------------- | ----------------------------------------------------------------------------- |
+| Explicit cross-boundary task | The task is declared as a cross-boundary coordination task                    |
+| Valid connection context     | The task is required to validate or produce a Connection Context              |
+| Governance override          | A governance authority has approved a documented override                     |
+| Repair dependency            | A repair task must access prior boundary outputs to correct a failed artifact |
+
+When execution crosses a boundary, the Runtime MUST record the reason for the cross-boundary interaction and MUST link the interaction to a valid Connection Context or governance record.
+
+The Runtime MUST preserve boundary state so construction can resume after interruption. This aligns with the existing runtime principle that execution state records task status, generated artifacts, and validation outcomes so workflows can recover without losing progress. 
+
+---
+
+## 19.11 Local-First, Cloud, and Hybrid Applicability
+
+Construction boundaries apply to all supported execution environments.
+
+A conforming implementation MUST NOT treat boundary planning as optional because an execution environment has access to larger models, larger context windows, distributed compute, or cloud orchestration.
+
+| Environment            | Boundary Requirement                                                                                         |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Local-first            | Boundaries constrain context, memory, tooling scope, and workstation resources                               |
+| Cloud-hosted           | Boundaries constrain architectural scope, reasoning drift, governance checkpoints, and auditability          |
+| Hybrid                 | Boundaries define what context, artifacts, and model interactions may cross local/cloud execution boundaries |
+| Distributed enterprise | Boundaries support partitioned execution, project isolation, operational monitoring, and staged governance   |
+
+The size and composition of a boundary MAY vary by execution environment. However, every construction plan MUST define boundaries, boundary dependencies, connection contexts, entry criteria, exit criteria, and continuation records.
+
+---
+
+## 19.12 Boundary Adaptation
+
+When a specification changes after a Construction Task Graph has been generated, the Planning Engine MUST evaluate boundary impact in addition to task and artifact impact.
+
+Boundary impact analysis MUST identify:
+
+| Field                         | Type  | Required | Description                                                                              |
+| ----------------------------- | ----- | -------- | ---------------------------------------------------------------------------------------- |
+| affected-boundaries           | array | REQUIRED | Boundaries requiring re-execution or review                                              |
+| unaffected-boundaries         | array | REQUIRED | Boundaries confirmed as unaffected                                                       |
+| affected-connection-contexts  | array | REQUIRED | Connection Contexts requiring validation or regeneration                                 |
+| affected-continuation-records | array | REQUIRED | Boundary Continuation Records superseded by the change                                   |
+| boundary-regression-level     | enum  | REQUIRED | none | entry-check | partial-reexecution | full-boundary-reexecution | governance-review |
+
+The platform MUST NOT re-execute unaffected boundaries unless explicitly instructed by a governance authority. This is consistent with the existing ISL traceability rule that unaffected artifacts identified by impact analysis MUST NOT be regenerated unless explicitly instructed by governance. 
+
+---
+
+## 20.0 Repair Task Generation
 
 This section defines how repair tasks are generated and inserted into the Construction Task Graph. Unlike initial construction tasks, repair tasks are typically generated dynamically during execution after validation or testing failure.
 
 Repair planning must respect execution repair limits defined in ISL v1.2.
 
-### 19.1 Repair Task Trigger
+### 20.1 Repair Task Trigger
 
 A repair task MAY be generated only when one of the following occurs:
 
@@ -784,7 +1066,7 @@ A repair task MAY be generated only when one of the following occurs:
 * artifact production produces invalid structure
 * review identifies a defect requiring correction
 
-### 19.2 Repair Task Schema Extensions
+### 20.2 Repair Task Schema Extensions
 
 A repair task MUST include the base task schema and the following fields.
 
@@ -799,7 +1081,7 @@ A repair task MUST include the base task schema and the following fields.
 | repair-scope                | enum    | REQUIRED    | artifact, task, service, interface, schema, policy |
 | expected-correction         | string  | CONDITIONAL | Correction expected or proposed                    |
 
-### 19.3 Repair Task Insertion Rules
+### 20.3 Repair Task Insertion Rules
 
 A repair task MUST be inserted after the failed verification or test task.
 
@@ -811,7 +1093,7 @@ A repair task MUST be traceable to the failed artifact, failed validation result
 
 The Planning Engine MUST refuse to generate a repair task that would exceed repair limits defined in ISL v1.2.
 
-### 19.4 Repair Dependency Rules
+### 20.4 Repair Dependency Rules
 
 Repair task dependencies MUST ensure that:
 
@@ -823,13 +1105,13 @@ Repair task dependencies MUST ensure that:
 
 ---
 
-## 20.0 Governance Constraints in Planning
+## 21.0 Governance Constraints in Planning
 
 This section defines how governance affects construction planning. Governance constraints must be visible in the plan before execution, not discovered only after a task attempts to run.
 
 Governance constraints may require approvals, block certain tools, restrict external model use, force human review, or impose additional validation.
 
-### 20.1 Governance Constraint Types
+### 21.1 Governance Constraint Types
 
 | Constraint Type       | Description                                          |
 | --------------------- | ---------------------------------------------------- |
@@ -842,7 +1124,7 @@ Governance constraints may require approvals, block certain tools, restrict exte
 | risk-tier-control     | Task behavior constrained by risk tier               |
 | separation-of-duties  | Approval or review must be assigned to distinct role |
 
-### 20.2 Governance Constraint Record Schema
+### 21.2 Governance Constraint Record Schema
 
 | Field             | Type    | Required    | Description                                 |
 | ----------------- | ------- | ----------- | ------------------------------------------- |
@@ -854,7 +1136,7 @@ Governance constraints may require approvals, block certain tools, restrict exte
 | blocking          | boolean | REQUIRED    | Whether constraint blocks execution         |
 | required-action   | string  | REQUIRED    | Action required to satisfy constraint       |
 
-### 20.3 Governance Planning Rules
+### 21.3 Governance Planning Rules
 
 The Planning Engine MUST identify governance constraints applicable to tasks.
 
@@ -864,13 +1146,13 @@ Governance constraints MUST be included in the Construction Task Graph or associ
 
 ---
 
-## 21.0 Planning Validation
+## 22.0 Planning Validation
 
 This section defines validation rules for the Construction Task Graph. Planning validation determines whether the generated plan is complete, internally consistent, dependency-safe, traceable, and executable.
 
 A plan that fails validation MUST NOT be consumed by the execution runtime as executable.
 
-### 21.1 Required Validation Checks
+### 22.1 Required Validation Checks
 
 The Planning Engine MUST validate:
 
@@ -894,7 +1176,7 @@ The Planning Engine MUST validate:
 * critical path is calculated
 * parallel groups are dependency-safe
 
-### 21.2 Planning Validation Report Schema
+### 22.2 Planning Validation Report Schema
 
 | Field                 | Type     | Required    | Description                 |
 | --------------------- | -------- | ----------- | --------------------------- |
@@ -908,7 +1190,7 @@ The Planning Engine MUST validate:
 | validated-by          | string   | REQUIRED    | Planning Engine component   |
 | executable            | boolean  | REQUIRED    | Whether plan is executable  |
 
-### 21.3 Planning Validation Finding Schema
+### 22.3 Planning Validation Finding Schema
 
 | Field           | Type   | Required    | Description                  |
 | --------------- | ------ | ----------- | ---------------------------- |
@@ -920,7 +1202,7 @@ The Planning Engine MUST validate:
 | message         | string | REQUIRED    | Finding description          |
 | required-action | string | REQUIRED    | Remediation required         |
 
-### 21.4 Failed Validation
+### 22.4 Failed Validation
 
 If planning validation fails with blocking findings, the plan status MUST be `draft` or `failed`.
 
@@ -928,11 +1210,11 @@ The plan MUST NOT be marked executable.
 
 ---
 
-## 22.0 Planning Error Classes
+## 23.0 Planning Error Classes
 
 This section defines planning-specific error classes. These errors support consistent reporting across Planning Engines, authoring tools, governance systems, and execution runtimes.
 
-### 22.1 Error Classes
+### 23.1 Error Classes
 
 | Error Class                            | Description                                                 | Default Severity |
 | -------------------------------------- | ----------------------------------------------------------- | ---------------- |
@@ -952,7 +1234,7 @@ This section defines planning-specific error classes. These errors support consi
 | planning-critical-path-unavailable     | Critical path could not be calculated                       | high             |
 | planning-impact-analysis-required      | Change requires impact analysis before adaptation           | blocking         |
 
-### 22.2 Error Record Schema
+### 23.2 Error Record Schema
 
 | Field           | Type     | Required    | Description                  |
 | --------------- | -------- | ----------- | ---------------------------- |
@@ -968,13 +1250,13 @@ This section defines planning-specific error classes. These errors support consi
 
 ---
 
-## 23.0 Construction Monitoring
+## 24.0 Construction Monitoring
 
 This section defines planning obligations that support execution monitoring. Although execution monitoring is performed by the runtime, the construction plan must provide the status model and expected task transitions the runtime will use.
 
 Construction monitoring ensures that progress can be tracked and that invalid task state changes are detected.
 
-### 23.1 Task Status Values
+### 24.1 Task Status Values
 
 | Status      | Meaning                                                                         |
 | ----------- | ------------------------------------------------------------------------------- |
@@ -985,7 +1267,7 @@ Construction monitoring ensures that progress can be tracked and that invalid ta
 | escalated   | Task requires governance or human intervention                                  |
 | skipped     | Task was not executed due to validated non-applicability or governance decision |
 
-### 23.2 Permitted Status Transitions
+### 24.2 Permitted Status Transitions
 
 | From        | To          | Condition                                                           |
 | ----------- | ----------- | ------------------------------------------------------------------- |
@@ -1003,7 +1285,7 @@ Construction monitoring ensures that progress can be tracked and that invalid ta
 
 No other transitions are permitted.
 
-### 23.3 Monitoring Rules
+### 24.3 Monitoring Rules
 
 The runtime MUST update task status as execution progresses.
 
@@ -1013,13 +1295,13 @@ The Planning Engine MUST preserve status history when adapting an in-progress pl
 
 ---
 
-## 24.0 Plan Adaptation to Specification Changes
+## 25.0 Plan Adaptation to Specification Changes
 
 This section defines how the Planning Engine adapts a plan when the specification changes. Because ISL specifications are living artifacts, construction plans must evolve without requiring unnecessary full reconstruction.
 
 Plan adaptation must be driven by traceability and impact analysis.
 
-### 24.1 Adaptation Trigger
+### 25.1 Adaptation Trigger
 
 Plan adaptation MUST occur when:
 
@@ -1030,7 +1312,7 @@ Plan adaptation MUST occur when:
 * an interface, policy, data entity, infrastructure, or must-have requirement changes
 * repair or execution feedback reveals a planning defect
 
-### 24.2 Required Adaptation Inputs
+### 25.2 Required Adaptation Inputs
 
 Plan adaptation MUST use:
 
@@ -1042,7 +1324,7 @@ Plan adaptation MUST use:
 * governance constraints
 * execution state when adaptation occurs during execution
 
-### 24.3 Adaptation Process
+### 25.3 Adaptation Process
 
 When adapting a plan, the Planning Engine MUST:
 
@@ -1062,7 +1344,7 @@ When adapting a plan, the Planning Engine MUST:
 14. Record a Plan Adaptation Record.
 15. Update traceability.
 
-### 24.4 Plan Adaptation Record Schema
+### 25.4 Plan Adaptation Record Schema
 
 | Field                          | Type     | Required    | Description                                  |
 | ------------------------------ | -------- | ----------- | -------------------------------------------- |
@@ -1081,7 +1363,7 @@ When adapting a plan, the Planning Engine MUST:
 | adapted-at                     | ISO 8601 | REQUIRED    | Time adaptation completed                    |
 | outcome                        | enum     | REQUIRED    | adapted, failed, escalated                   |
 
-### 24.5 Adaptation Rules
+### 25.5 Adaptation Rules
 
 The platform MUST NOT restart the entire construction plan when impact analysis identifies a bounded affected scope.
 
@@ -1093,13 +1375,13 @@ A task associated with a removed specification entity MUST be removed, deprecate
 
 ---
 
-## 25.0 Plan Versioning and Supersession
+## 26.0 Plan Versioning and Supersession
 
 This section defines how construction plans are versioned. Construction plans are derived artifacts and must be preserved across specification changes, replanning, repair insertion, and execution history.
 
 Plan versioning supports audit, recovery, comparison, and traceability.
 
-### 25.1 Plan Version Fields
+### 26.1 Plan Version Fields
 
 Every construction plan MUST include:
 
@@ -1111,7 +1393,7 @@ Every construction plan MUST include:
 | version-reason        | enum     | REQUIRED    | initial, adaptation, repair-insertion, governance-change, correction |
 | created-at            | ISO 8601 | REQUIRED    | Version creation time                                                |
 
-### 25.2 Versioning Rules
+### 26.2 Versioning Rules
 
 A new plan version MUST be created when:
 
@@ -1129,11 +1411,11 @@ A superseded plan MUST NOT be deleted if it was used for execution or governance
 
 ---
 
-## 26.0 Planning and Traceability Integration
+## 27.0 Planning and Traceability Integration
 
 This section defines how planning integrates with traceability. The construction plan is a traceability-critical artifact because it connects canonical entities to execution tasks.
 
-### 26.1 Required Planning Traceability Links
+### 27.1 Required Planning Traceability Links
 
 The Planning Engine MUST create or prepare traceability links for:
 
@@ -1145,7 +1427,7 @@ The Planning Engine MUST create or prepare traceability links for:
 * VerificationTask validates planned Artifact or source entity
 * Plan supersedes prior Plan when applicable
 
-### 26.2 Traceability Timing
+### 27.2 Traceability Timing
 
 Traceability links from entities to tasks MUST be created during planning.
 
@@ -1155,11 +1437,11 @@ A plan MUST NOT be marked executable if source entity to task traceability is mi
 
 ---
 
-## 27.0 Planning and Readiness Integration
+## 28.0 Planning and Readiness Integration
 
 This section defines how planning interacts with readiness levels. Readiness determines which planning actions are permitted.
 
-### 27.1 Planning Permissions
+### 28.1 Planning Permissions
 
 | Readiness Level  | Permitted Planning Activity               |
 | ---------------- | ----------------------------------------- |
@@ -1168,7 +1450,7 @@ This section defines how planning interacts with readiness levels. Readiness det
 | Machine-Valid    | Formal construction planning              |
 | Autonomous-Ready | Executable planning and execution handoff |
 
-### 27.2 Readiness Rules
+### 28.2 Readiness Rules
 
 A formal construction plan MAY be generated at Machine-Valid readiness.
 
@@ -1178,11 +1460,11 @@ If readiness regresses, the Planning Engine MUST determine whether the plan rema
 
 ---
 
-## 28.0 Planning and Execution Handoff
+## 29.0 Planning and Execution Handoff
 
 This section defines the handoff from Planning Engine to Execution Runtime. The execution runtime depends on a validated, executable Construction Task Graph.
 
-### 28.1 Handoff Preconditions
+### 29.1 Handoff Preconditions
 
 A plan MUST satisfy the following before handoff to execution:
 
@@ -1198,7 +1480,7 @@ A plan MUST satisfy the following before handoff to execution:
 * critical path is calculated
 * parallel groups are calculated
 
-### 28.2 Execution Handoff Record Schema
+### 29.2 Execution Handoff Record Schema
 
 | Field                    | Type     | Required    | Description                                |
 | ------------------------ | -------- | ----------- | ------------------------------------------ |
@@ -1213,7 +1495,7 @@ A plan MUST satisfy the following before handoff to execution:
 | accepted-by-runtime      | boolean  | REQUIRED    | Whether runtime accepted handoff           |
 | rejection-reason         | string   | CONDITIONAL | Required when accepted-by-runtime is false |
 
-### 28.3 Runtime Rejection
+### 29.3 Runtime Rejection
 
 The Execution Runtime MUST reject a handoff when:
 
@@ -1227,11 +1509,11 @@ The Execution Runtime MUST reject a handoff when:
 
 ---
 
-## 29.0 Completion of the Construction Plan
+## 30.0 Completion of the Construction Plan
 
 This section defines when a construction plan may be considered complete. Planning completion is not the same as execution completion. A plan may be complete as a planning artifact before execution begins; it may also later be completed as an executed plan.
 
-### 29.1 Planning Completion Criteria
+### 30.1 Planning Completion Criteria
 
 A construction plan may be marked planning-complete when:
 
@@ -1245,7 +1527,7 @@ A construction plan may be marked planning-complete when:
 * planning validation passes
 * traceability links from source entities to tasks exist
 
-### 29.2 Execution Completion Criteria
+### 30.2 Execution Completion Criteria
 
 A construction plan may be marked execution-completed only when the execution runtime reports completion under ISL v1.2.
 
@@ -1261,7 +1543,7 @@ Execution completion requires:
 * traceability integrity checks passed
 * Completion Report produced
 
-### 29.3 Failed Plan Completion
+### 30.3 Failed Plan Completion
 
 A construction plan MUST be marked failed when:
 
@@ -1274,11 +1556,11 @@ A construction plan MUST be marked failed when:
 
 ---
 
-## 30.0 Planning Records and Auditability
+## 31.0 Planning Records and Auditability
 
 This section defines the records that must be preserved for planning auditability. Construction planning decisions affect architecture, execution, artifacts, and governance, so they must be auditable.
 
-### 30.1 Required Planning Records
+### 31.1 Required Planning Records
 
 The platform MUST preserve:
 
@@ -1296,7 +1578,7 @@ The platform MUST preserve:
 * Execution Handoff Records
 * Planning Error Records
 
-### 30.2 Audit Query Requirements
+### 31.2 Audit Query Requirements
 
 The platform MUST support queries for:
 
@@ -1311,7 +1593,7 @@ The platform MUST support queries for:
 * parallel groups for a plan
 * planning validation findings
 
-### 30.3 Record Immutability
+### 31.3 Record Immutability
 
 Planning records used for execution, governance review, or audit MUST NOT be overwritten.
 
@@ -1319,11 +1601,11 @@ Corrections MUST be recorded by creating a new plan version or corrective record
 
 ---
 
-## 31.0 Conformance Requirements
+## 32.0 Conformance Requirements
 
 This section defines conformance for construction plans, Planning Engines, and platforms.
 
-### 31.1 Construction Plan Conformance
+### 32.1 Construction Plan Conformance
 
 A Construction Plan conforms to ISL v1.5 if it:
 
@@ -1340,7 +1622,7 @@ A Construction Plan conforms to ISL v1.5 if it:
 * passes planning validation
 * preserves traceability to source entities
 
-### 31.2 Planning Engine Conformance
+### 32.2 Planning Engine Conformance
 
 A Planning Engine conforms to ISL v1.5 if it can:
 
@@ -1360,7 +1642,7 @@ A Planning Engine conforms to ISL v1.5 if it can:
 * produce required planning records
 * support execution handoff
 
-### 31.3 Platform Conformance
+### 32.3 Platform Conformance
 
 A platform conforms to ISL v1.5 if it:
 
@@ -1375,7 +1657,7 @@ A platform conforms to ISL v1.5 if it:
 
 ---
 
-## 32.0 Summary
+## 33.0 Summary
 
 ISL v1.5 defines the Construction Planning Model that transforms a canonical ISL specification into an executable construction task graph. It establishes how tasks are generated, classified, assigned, validated, ordered, verified, adapted, monitored, and handed off to execution.
 
